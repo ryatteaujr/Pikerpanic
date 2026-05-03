@@ -32,6 +32,9 @@ export class GameScene extends Phaser.Scene {
   private paused = false;
   private message = 'Pick all ticket items and unload at Chute 06.';
   private lastForkliftHitAt = -2000;
+  private currentMusic?: Phaser.Sound.BaseSound;
+  private currentMusicIndex = 0;
+  private readonly musicKeys = ['music-expedite-load', 'music-schedule-failure'];
   private readonly respawn = new Phaser.Math.Vector2(184, 544);
 
   constructor() {
@@ -77,6 +80,8 @@ export class GameScene extends Phaser.Scene {
       loop: true,
       callback: () => this.tickTimer(),
     });
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.stopMusicPlaylist());
+    this.startMusicPlaylist();
 
     this.hud.render(this.hudState());
   }
@@ -422,5 +427,30 @@ export class GameScene extends Phaser.Scene {
       duration: 140,
       onComplete: () => flash.destroy(),
     });
+  }
+
+  private startMusicPlaylist(): void {
+    this.stopMusicPlaylist();
+    this.currentMusicIndex = 0;
+    this.playCurrentMusic();
+  }
+
+  private playCurrentMusic(): void {
+    const key = this.musicKeys[this.currentMusicIndex];
+    this.currentMusic = this.sound.add(key, { volume: 0.58 });
+    this.currentMusic.once('complete', () => {
+      this.currentMusic?.destroy();
+      this.currentMusicIndex = (this.currentMusicIndex + 1) % this.musicKeys.length;
+      this.playCurrentMusic();
+    });
+    this.currentMusic.play();
+  }
+
+  private stopMusicPlaylist(): void {
+    for (const key of this.musicKeys) {
+      this.sound.stopByKey(key);
+    }
+    this.currentMusic?.destroy();
+    this.currentMusic = undefined;
   }
 }

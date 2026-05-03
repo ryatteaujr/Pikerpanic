@@ -5,6 +5,11 @@ export class BootScene extends Phaser.Scene {
     super('BootScene');
   }
 
+  preload(): void {
+    this.load.audio('music-expedite-load', 'audio/Expedite_The_Load.mp3');
+    this.load.audio('music-schedule-failure', 'audio/Schedule_Failure_Imminent.mp3');
+  }
+
   create(): void {
     this.scene.start('StartScene');
   }
