@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
   private lastForkliftHitAt = -2000;
   private currentMusic?: Phaser.Sound.BaseSound;
   private currentMusicIndex = 0;
-  private readonly musicKeys = ['music-expedite-load', 'music-schedule-failure'];
+  private readonly musicKeys = ['music-expedite-load', 'music-schedule-failure', 'music-priority-override'];
   private readonly respawn = new Phaser.Math.Vector2(184, 544);
 
   constructor() {
