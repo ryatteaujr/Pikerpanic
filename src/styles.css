@@ -1,0 +1,480 @@
+:root {
+  --arcade-metal: #202832;
+  --arcade-metal-dark: #0d1117;
+  --arcade-metal-light: #394653;
+  --amber-trim: #e1aa3a;
+  --warning-yellow: #ffdf61;
+  --scanner-blue: #56c7ff;
+  --chute-purple: #a76cff;
+  --success-green: #68f39a;
+  --danger-red: #ff4e57;
+  --panel-shadow: 0 8px 0 rgba(0, 0, 0, 0.44), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: #f7efd0;
+  background: #10141a;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px) 0 0 / 32px 32px,
+    radial-gradient(circle at 50% 45%, #27313a 0, #10141a 68%);
+}
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+#game-root,
+#hud-root {
+  width: min(100vw, 150vh, 960px);
+  height: min(66.6667vw, 100vh, 640px);
+}
+
+#game-root canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 4px solid var(--amber-trim);
+  background: #182028;
+  image-rendering: pixelated;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+#hud-root {
+  position: absolute;
+  pointer-events: none;
+}
+
+.cabinet-hud {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #f7efd0;
+  text-shadow: 2px 2px 0 #000;
+  border: 4px solid var(--amber-trim);
+  box-shadow: inset 0 0 0 5px rgba(14, 17, 22, 0.82);
+}
+
+.cabinet-hud::before {
+  content: "";
+  position: absolute;
+  inset: 78px 150px 68px;
+  border: 2px solid rgba(86, 199, 255, 0.12);
+  box-shadow: inset 0 0 18px rgba(86, 199, 255, 0.09);
+}
+
+.ops-board {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 82px;
+  display: grid;
+  grid-template-columns: 1.35fr 1.22fr repeat(4, 0.82fr) 0.72fr repeat(4, 0.72fr);
+  gap: 4px;
+  padding: 7px 9px 9px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    var(--arcade-metal);
+  border-bottom: 4px solid var(--amber-trim);
+}
+
+.status-module,
+.hud-panel,
+.bottom-bar > div,
+.bottom-bar > p,
+.safety-warning {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 45%),
+    rgba(13, 17, 23, 0.92);
+  border: 2px solid var(--arcade-metal-light);
+  box-shadow: var(--panel-shadow);
+}
+
+.status-module {
+  min-width: 0;
+  min-height: 64px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 5px 6px;
+  overflow: hidden;
+}
+
+.status-module span,
+.panel-label,
+.bottom-bar span,
+.stat-meter span {
+  color: var(--warning-yellow);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.status-module strong,
+.hud-panel strong,
+.bottom-bar strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff4bf;
+  font-size: 13px;
+  line-height: 1.05;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.logo-module {
+  border-color: var(--amber-trim);
+}
+
+.logo-module strong {
+  color: var(--amber-trim);
+  font-size: 15px;
+}
+
+.module-kicker {
+  color: var(--scanner-blue) !important;
+}
+
+.timer-module {
+  border-color: var(--warning-yellow);
+}
+
+.timer-module .seven-seg {
+  color: var(--warning-yellow);
+}
+
+.vehicle-module strong {
+  color: var(--success-green);
+}
+
+.chute-module {
+  border-color: var(--chute-purple);
+}
+
+.chute-module strong {
+  color: var(--chute-purple);
+}
+
+.score-module {
+  border-color: var(--scanner-blue);
+}
+
+.seven-seg {
+  display: inline-block;
+  min-width: 4ch;
+  font-family: "Courier New", Consolas, monospace;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.timer-module .seven-seg,
+.score-module .seven-seg,
+.bottom-bar .seven-seg {
+  min-width: 6ch;
+}
+
+.meter,
+.stat-meter b {
+  display: block;
+  height: 7px;
+  overflow: hidden;
+  background: #080b0f;
+  border: 1px solid #5c6670;
+}
+
+.meter i,
+.stat-meter i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--success-green), var(--warning-yellow));
+}
+
+.hud-danger .timer-module,
+.hud-danger .bottom-bar > p {
+  border-color: var(--danger-red);
+  animation: warning-pulse 0.7s steps(2, end) infinite;
+}
+
+.hud-danger .timer-module .seven-seg {
+  color: var(--danger-red);
+}
+
+.cabinet-rail {
+  position: absolute;
+  top: 94px;
+  bottom: 74px;
+  width: 142px;
+  display: grid;
+  grid-template-rows: max-content 1fr;
+  gap: 8px;
+}
+
+.left-rail {
+  left: 8px;
+}
+
+.right-rail {
+  right: 8px;
+}
+
+.hud-panel {
+  min-width: 0;
+  padding: 8px;
+  overflow: hidden;
+  border-color: var(--amber-trim);
+}
+
+.mezzanine-panel {
+  min-height: 116px;
+  border-color: var(--scanner-blue);
+}
+
+.mezzanine-panel strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--scanner-blue);
+  font-size: 14px;
+}
+
+.mezzanine-panel p {
+  margin: 6px 0 8px;
+  color: #aeb7bf;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.access-slats {
+  display: grid;
+  gap: 5px;
+}
+
+.access-slats i {
+  display: block;
+  height: 9px;
+  background: repeating-linear-gradient(90deg, #384654 0 8px, #111821 8px 13px);
+  border: 1px solid #5f7485;
+}
+
+.ticket-panel {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+
+.ticket-panel > strong {
+  color: var(--success-green);
+  font-size: 12px;
+}
+
+.ticket-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 4px 5px;
+  background: rgba(225, 170, 58, 0.1);
+  border-left: 3px solid var(--amber-trim);
+}
+
+.ticket-line span,
+.capacity span,
+.control-row span {
+  min-width: 0;
+  overflow: hidden;
+  color: #f7efd0;
+  font-size: 11px;
+  line-height: 1.1;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ticket-line strong {
+  color: var(--success-green);
+  font-size: 12px;
+}
+
+.capacity {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+  padding-top: 7px;
+  border-top: 1px solid #697782;
+}
+
+.capacity strong {
+  color: var(--scanner-blue);
+}
+
+.vehicle-stats,
+.controls-panel {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+
+.stat-meter {
+  display: grid;
+  gap: 4px;
+}
+
+.stat-meter b {
+  height: 10px;
+}
+
+.controls-panel {
+  border-color: var(--chute-purple);
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 7px;
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 24px;
+  padding: 0 5px;
+  color: #0b0d11;
+  background: var(--warning-yellow);
+  border: 2px solid #fff0a0;
+  border-bottom-color: #7d5c19;
+  border-radius: 999px;
+  font: 900 10px/1 "Courier New", monospace;
+  text-shadow: none;
+}
+
+.bottom-bar {
+  position: absolute;
+  inset: auto 8px 8px;
+  height: 54px;
+  display: grid;
+  grid-template-columns: 108px 108px minmax(0, 1fr) 126px 190px;
+  gap: 6px;
+  padding: 0;
+}
+
+.bottom-bar > div,
+.bottom-bar > p,
+.safety-warning {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 7px 8px;
+  overflow: hidden;
+}
+
+.bottom-bar > div {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+}
+
+.bottom-bar > p {
+  display: flex;
+  align-items: center;
+  color: var(--warning-yellow);
+  font-size: 14px;
+  line-height: 1.15;
+  border-color: var(--warning-yellow);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.safety-warning {
+  display: flex;
+  align-items: center;
+  color: #12151a;
+  background:
+    repeating-linear-gradient(135deg, var(--warning-yellow) 0 12px, #171717 12px 20px);
+  border-color: var(--warning-yellow);
+  font-weight: 900;
+  font-size: 11px;
+  line-height: 1.05;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+@keyframes warning-pulse {
+  50% {
+    background-color: rgba(128, 22, 31, 0.96);
+  }
+}
+
+@media (max-width: 760px) {
+  .cabinet-hud::before {
+    inset: 13% 16% 9%;
+  }
+
+  .ops-board {
+    height: 13%;
+    min-height: 0;
+    grid-template-columns: 1.35fr repeat(4, 1fr);
+    gap: 2px;
+    padding: 3px 4px;
+  }
+
+  .ops-board .vehicle-module,
+  .ops-board .chute-module,
+  .ops-board .score-module,
+  .ops-board .total-module,
+  .ops-board .lph-module,
+  .ops-board .combo-module {
+    display: none;
+  }
+
+  .status-module {
+    min-height: 0;
+    gap: 1px;
+    padding: 2px 3px;
+  }
+
+  .status-module span,
+  .panel-label,
+  .bottom-bar span,
+  .stat-meter span {
+    font-size: 5.8px;
+  }
+
+  .status-module strong {
+    font-size: 7.2px;
+  }
+
+  .seven-seg {
+    min-width: 3ch;
+  }
+
+  .timer-module .seven-seg,
+  .score-module .seven-seg,
+  .bottom-bar .seven-seg {
+    min-width: 5ch;
+  }
+
+  .meter {
+    height: 4px;
+  }
+
+  .cabinet-rail,
+  .bottom-bar {
+    display: none;
+  }
+}
