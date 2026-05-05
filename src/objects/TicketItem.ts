@@ -5,6 +5,18 @@ const colors: Record<TicketItemType, number> = {
   Hammers: 0xe84d5b,
   Tape: 0x74e36d,
   'Drill Bits': 0xb985ff,
+  Fragile: 0x8dffb1,
+  'Water Heater': 0x5cc8ff,
+  'Freezer Pack': 0xaeefff,
+};
+
+const labels: Record<TicketItemType, string> = {
+  Hammers: 'H',
+  Tape: 'T',
+  'Drill Bits': 'D',
+  Fragile: 'F!',
+  'Water Heater': 'WH',
+  'Freezer Pack': 'ICE',
 };
 
 export class TicketItem extends Phaser.GameObjects.Container {
@@ -33,14 +45,15 @@ export class TicketItem extends Phaser.GameObjects.Container {
     body.setOffset(-12, -11);
     this.setDepth(12);
 
-    this.labelBack = scene.add.rectangle(x, y + 24, 14, 14, 0x132026, 0.86).setStrokeStyle(1, colors[itemType]);
+    this.labelBack = scene.add.rectangle(x, y + 24, labels[itemType].length > 2 ? 25 : 18, 14, 0x132026, 0.86).setStrokeStyle(1, colors[itemType]);
     this.label = scene.add
       .text(x, y + 24, itemType[0], {
         color: '#f6f0cf',
         fontFamily: 'Arial Black',
-        fontSize: '10px',
+        fontSize: labels[itemType].length > 1 ? '8px' : '10px',
       })
       .setOrigin(0.5);
+    this.label.setText(labels[itemType]);
     this.labelBack.setDepth(11);
     this.label.setDepth(12);
   }

@@ -4,7 +4,7 @@ export class Chute extends Phaser.GameObjects.Container {
   private readonly glow: Phaser.GameObjects.Ellipse;
   private readonly dock: Phaser.GameObjects.Rectangle;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
+  constructor(scene: Phaser.Scene, x: number, y: number, chuteNumber = '06') {
     super(scene, x, y);
     scene.add.existing(this);
 
@@ -27,7 +27,7 @@ export class Chute extends Phaser.GameObjects.Container {
       })
       .setOrigin(0.5);
     const number = scene.add
-      .text(0, -39, '06', {
+      .text(0, -39, chuteNumber, {
         color: '#d58aff',
         fontFamily: 'Arial Black',
         fontSize: '13px',

@@ -1,4 +1,4 @@
-import { levelConfig } from '../config/levelConfig';
+import type { WarehouseLevelConfig } from '../config/levelConfig';
 import { pickTruckConfig } from '../config/vehicleConfig';
 import type { TicketManager } from './TicketManager';
 import { formatTimer, getLoadPerformancePerHour } from './TimerManager';
@@ -11,6 +11,7 @@ interface HudState {
   combo: number;
   message: string;
   ticket: TicketManager;
+  level: WarehouseLevelConfig;
 }
 
 export class HudManager {
@@ -43,13 +44,17 @@ export class HudManager {
       <div class="cabinet-hud${dangerClass}">
         <section class="ops-board" aria-label="Warehouse status board">
           <div class="status-module logo-module">
-            <span class="module-kicker">WAREHOUSE</span>
-            <strong>PICKER PANIC</strong>
+            <span class="module-kicker">HOUSE-HASSON</span>
+            <strong>HARDWARE</strong>
+          </div>
+          <div class="status-module level-module">
+            <span>CURRENT LEVEL</span>
+            <strong class="seven-seg">${String(state.level.level).padStart(2, '0')}</strong>
           </div>
           <div class="status-module timer-module">
             <span>TRUCK LOAD</span>
             <strong class="seven-seg">${formatTimer(state.remainingSeconds)}</strong>
-            <div class="meter"><i style="width: ${Math.max(0, (state.remainingSeconds / levelConfig.timerSeconds) * 100)}%"></i></div>
+            <div class="meter"><i style="width: ${Math.max(0, (state.remainingSeconds / state.level.timerSeconds) * 100)}%"></i></div>
           </div>
           <div class="status-module picks-module">
             <span>PICKS DONE</span>
@@ -69,7 +74,7 @@ export class HudManager {
           </div>
           <div class="status-module chute-module">
             <span>CHUTE</span>
-            <strong class="seven-seg">${levelConfig.chute}</strong>
+            <strong class="seven-seg">${state.level.chute}</strong>
           </div>
           <div class="status-module accuracy-module">
             <span>ACCURACY</span>
@@ -98,7 +103,7 @@ export class HudManager {
           </section>
           <section class="ticket-panel hud-panel">
             <span class="panel-label">CURRENT ORDER</span>
-            <strong>PICK TICKET #${levelConfig.ticketNumber}</strong>
+            <strong>PICK TICKET #${state.level.ticketNumber}</strong>
             ${lines}
             <div class="capacity">
               <span>TRUCK BAY</span>
@@ -127,7 +132,7 @@ export class HudManager {
           <div><span>SCORE</span><strong class="seven-seg">${String(state.score).padStart(6, '0')}</strong></div>
           <div><span>HIGH</span><strong class="seven-seg">${String(Math.max(state.score, 0)).padStart(6, '0')}</strong></div>
           <p>${state.message}</p>
-          <div><span>WAREHOUSE</span><strong>${state.ticket.isComplete ? 'LOAD READY' : 'ACTIVE LOAD'}</strong></div>
+          <div><span>LEVEL</span><strong>${state.level.level}: ${state.level.name}</strong></div>
           <div class="safety-warning">SAFETY: WATCH FOR CROSS TRAFFIC</div>
         </section>
       </div>

@@ -1,6 +1,13 @@
 import Phaser from 'phaser';
+import { isDealerDashLevel } from '../config/dealerDashConfig';
+import { isFinaleLevel } from '../config/finaleConfig';
+import { isMezzanineLevel } from '../config/mezzanineConfig';
+import { registerSoundToggle } from '../systems/SoundToggle';
+import { drawHouseHassonLogoBadge } from '../ui/BrandBadge';
 
 interface LevelCompleteData {
+  level: number;
+  nextLevel: number | null;
   score: number;
   remainingSeconds: number;
   accuracy: number;
@@ -15,8 +22,10 @@ export class LevelCompleteScene extends Phaser.Scene {
   }
 
   create(data: LevelCompleteData): void {
+    registerSoundToggle(this);
     document.querySelector<HTMLDivElement>('#hud-root')!.innerHTML = '';
     this.add.rectangle(480, 320, 960, 640, 0x10251b);
+    drawHouseHassonLogoBadge(this);
     this.add
       .text(480, 128, 'LEVEL COMPLETE', {
         color: '#8dffb1',
@@ -31,7 +40,7 @@ export class LevelCompleteScene extends Phaser.Scene {
       .text(
         480,
         300,
-        `Score: ${data.score}\nTime Remaining: ${data.remainingSeconds}s\nAccuracy: ${data.accuracy}%\nLPH: ${data.lph}\nLives Remaining: ${data.lives}\nGrade: ${data.grade}`,
+        `Level ${data.level} cleared\nScore: ${data.score}\nTime Remaining: ${data.remainingSeconds}s\nAccuracy: ${data.accuracy}%\nLPH: ${data.lph}\nLives Remaining: ${data.lives}\nGrade: ${data.grade}`,
         {
           align: 'center',
           color: '#f6f0cf',
@@ -42,18 +51,31 @@ export class LevelCompleteScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
+    const nextPrompt = data.nextLevel ? `PRESS SPACE / A FOR LEVEL ${data.nextLevel}` : 'PRESS SPACE / A TO PLAY AGAIN';
     this.add
-      .text(480, 514, 'PRESS SPACE / A TO PLAY AGAIN', {
+      .text(480, 514, nextPrompt, {
         color: '#f0c44c',
         fontFamily: 'Arial Black, Arial',
         fontSize: '24px',
       })
       .setOrigin(0.5);
 
-    this.input.keyboard?.once('keydown-SPACE', () => this.scene.start('GameScene'));
+    const startNextLevel = () => {
+      const level = data.nextLevel ?? 1;
+      const sceneKey = isDealerDashLevel(level)
+        ? 'DealerDashScene'
+        : isFinaleLevel(level)
+          ? 'FinaleScene'
+          : isMezzanineLevel(level)
+            ? 'MezzanineScene'
+            : 'GameScene';
+      this.scene.start(sceneKey, { level });
+    };
+
+    this.input.keyboard?.once('keydown-SPACE', startNextLevel);
     this.input.gamepad?.once('down', (_pad: Phaser.Input.Gamepad.Gamepad, button: Phaser.Input.Gamepad.Button) => {
       if (button.index === 0) {
-        this.scene.start('GameScene');
+        startNextLevel();
       }
     });
   }

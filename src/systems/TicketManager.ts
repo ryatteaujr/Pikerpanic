@@ -52,10 +52,15 @@ export class TicketManager {
   }
 
   unload(): UnloadResult {
+    return this.unloadTypes([...this.carried.keys()]);
+  }
+
+  unloadTypes(acceptedTypes: TicketItemType[]): UnloadResult {
     let unloaded = 0;
+    const accepted = new Set(acceptedTypes);
 
     for (const [type, count] of this.carried) {
-      if (count <= 0) {
+      if (count <= 0 || !accepted.has(type)) {
         continue;
       }
       this.completed.set(type, this.countIn(this.completed, type) + count);
@@ -95,6 +100,14 @@ export class TicketManager {
       completed: this.countIn(this.completed, line.type),
       carried: this.countIn(this.carried, line.type),
     }));
+  }
+
+  isCarrying(type: TicketItemType): boolean {
+    return this.countIn(this.carried, type) > 0;
+  }
+
+  recordFragileBreakage(): void {
+    this.totalAttempts += 1;
   }
 
   private remainingFor(type: TicketItemType): number {

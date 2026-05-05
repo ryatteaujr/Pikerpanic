@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { registerSoundToggle } from '../systems/SoundToggle';
+import { drawHouseHassonLogoBadge } from '../ui/BrandBadge';
 
 interface GameOverData {
   score: number;
@@ -13,8 +15,10 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(data: GameOverData): void {
+    registerSoundToggle(this);
     document.querySelector<HTMLDivElement>('#hud-root')!.innerHTML = '';
     this.add.rectangle(480, 320, 960, 640, 0x210f16);
+    drawHouseHassonLogoBadge(this);
     this.add
       .text(480, 150, 'GAME OVER', {
         color: '#ff6b6b',
@@ -43,10 +47,10 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.input.keyboard?.once('keydown-SPACE', () => this.scene.start('GameScene'));
+    this.input.keyboard?.once('keydown-SPACE', () => this.scene.start('GameScene', { level: 1 }));
     this.input.gamepad?.once('down', (_pad: Phaser.Input.Gamepad.Gamepad, button: Phaser.Input.Gamepad.Button) => {
       if (button.index === 0) {
-        this.scene.start('GameScene');
+        this.scene.start('GameScene', { level: 1 });
       }
     });
   }
