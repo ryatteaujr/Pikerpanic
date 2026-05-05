@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
-import { levelConfig, type TicketItemType } from '../config/levelConfig';
+import { getLevelConfig, getNextLevelNumber, levelConfig, type TicketItemType, type WarehouseLevelConfig } from '../config/levelConfig';
 import { scoringConfig } from '../config/scoringConfig';
 import { Chute } from '../objects/Chute';
 import { ForkliftHazard } from '../objects/ForkliftHazard';
+import { PedestrianHazard } from '../objects/PedestrianHazard';
 import { Pickup } from '../objects/Pickup';
 import { PlayerTruck } from '../objects/PlayerTruck';
 import { TicketItem } from '../objects/TicketItem';
@@ -10,6 +11,8 @@ import { getGrade } from '../systems/GradeManager';
 import { HudManager } from '../systems/HudManager';
 import { InputManager } from '../systems/InputManager';
 import { ScoreManager } from '../systems/ScoreManager';
+import { playSoundEffect } from '../systems/SoundEffectManager';
+import { registerSoundToggle } from '../systems/SoundToggle';
 import { TicketManager } from '../systems/TicketManager';
 import { getLoadPerformancePerHour } from '../systems/TimerManager';
 import { pickTruckConfig } from '../config/vehicleConfig';
@@ -18,8 +21,10 @@ export class GameScene extends Phaser.Scene {
   private inputManager!: InputManager;
   private hud = new HudManager();
   private player!: PlayerTruck;
-  private forklift!: ForkliftHazard;
+  private forklifts: ForkliftHazard[] = [];
+  private pedestrians: PedestrianHazard[] = [];
   private chute!: Chute;
+  private coldChute?: Chute;
   private walls!: Phaser.Physics.Arcade.StaticGroup;
   private pickups!: Phaser.Physics.Arcade.StaticGroup;
   private ticketItems: TicketItem[] = [];
@@ -32,48 +37,61 @@ export class GameScene extends Phaser.Scene {
   private paused = false;
   private message = 'Pick all ticket items and unload at Chute 06.';
   private lastForkliftHitAt = -2000;
+  private coldDeadline = 0;
   private currentMusic?: Phaser.Sound.BaseSound;
   private currentMusicIndex = 0;
-  private readonly musicKeys = ['music-expedite-load', 'music-schedule-failure', 'music-priority-override'];
   private readonly respawn = new Phaser.Math.Vector2(184, 544);
+  private activeLevel: WarehouseLevelConfig = levelConfig;
 
   constructor() {
     super('GameScene');
   }
 
-  create(): void {
+  create(data: { level?: number } = {}): void {
+    registerSoundToggle(this);
+    this.activeLevel = getLevelConfig(data.level ?? 1);
     this.score = new ScoreManager(scoringConfig);
-    this.ticket = new TicketManager(levelConfig.requiredItems, pickTruckConfig.capacity);
-    this.lives = levelConfig.lives;
+    this.ticket = new TicketManager(this.activeLevel.requiredItems, pickTruckConfig.capacity);
+    this.lives = this.activeLevel.lives;
     this.elapsedSeconds = 0;
-    this.remainingSeconds = levelConfig.timerSeconds;
+    this.remainingSeconds = this.activeLevel.timerSeconds;
     this.combo = 0;
     this.paused = false;
-    this.message = 'Pick all ticket items and unload at Chute 06.';
+    this.message = `Level ${this.activeLevel.level}: pick all items and unload at Chute ${this.activeLevel.chute}.`;
     this.lastForkliftHitAt = -2000;
+    this.coldDeadline = 0;
     this.ticketItems = [];
+    this.forklifts = [];
+    this.pedestrians = [];
 
     this.inputManager = new InputManager(this);
-    this.physics.world.setBounds(156, levelConfig.hudHeight, 648, 470);
+    this.physics.world.setBounds(156, this.activeLevel.hudHeight, 648, 470);
     this.drawWarehouse();
     this.createWalls();
     this.createPickups();
     this.createTicketItems();
 
-    this.chute = new Chute(this, 736, 538);
+    this.chute = new Chute(this, this.activeLevel.chutePosition.x, this.activeLevel.chutePosition.y, this.activeLevel.chute);
+    if (this.activeLevel.coldChute) {
+      this.coldChute = new Chute(this, this.activeLevel.coldChute.x, this.activeLevel.coldChute.y, this.activeLevel.coldChute.id);
+    } else {
+      this.coldChute = undefined;
+    }
 
     this.player = new PlayerTruck(this, this.respawn.x, this.respawn.y);
-    this.forklift = new ForkliftHazard(this, 356, 238, [
-      new Phaser.Math.Vector2(356, 238),
-      new Phaser.Math.Vector2(356, 510),
-      new Phaser.Math.Vector2(590, 510),
-      new Phaser.Math.Vector2(590, 238),
-    ]);
+    this.createHazards();
 
     this.physics.add.collider(this.player, this.walls);
-    this.physics.add.collider(this.forklift, this.walls);
+    for (const forklift of this.forklifts) {
+      this.physics.add.collider(forklift, this.walls);
+      this.physics.add.overlap(this.player, forklift, () => this.hitForklift());
+    }
+    for (const pedestrian of this.pedestrians) {
+      this.physics.add.collider(this.player, pedestrian, () => {
+        this.message = 'Worker in the aisle - go around.';
+      });
+    }
     this.physics.add.overlap(this.player, this.pickups, (_player, pickup) => this.collectPickup(pickup as Pickup));
-    this.physics.add.overlap(this.player, this.forklift, () => this.hitForklift());
 
     this.time.addEvent({
       delay: 1000,
@@ -99,7 +117,13 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.player.move(this.inputManager.movement());
-    this.forklift.updatePatrol();
+    for (const forklift of this.forklifts) {
+      forklift.updatePatrol();
+    }
+    for (const pedestrian of this.pedestrians) {
+      pedestrian.updatePatrol();
+    }
+    this.checkColdChainTimer();
     this.updateActionGlows();
 
     if (this.inputManager.pickPressed()) {
@@ -119,10 +143,10 @@ export class GameScene extends Phaser.Scene {
     this.add.rectangle(480, 104, 960, 4, 0xf0c44c);
 
     for (let x = 166; x < 805; x += 40) {
-      this.add.line(0, 0, x, levelConfig.hudHeight, x, levelConfig.height, 0x344149, 0.24).setOrigin(0);
+      this.add.line(0, 0, x, this.activeLevel.hudHeight, x, this.activeLevel.height, 0x344149, 0.24).setOrigin(0);
     }
 
-    for (let y = levelConfig.hudHeight + 36; y < 570; y += 58) {
+    for (let y = this.activeLevel.hudHeight + 36; y < 570; y += 58) {
       this.add.line(0, 0, 166, y, 794, y, 0x27323a, 0.35).setOrigin(0);
     }
 
@@ -183,22 +207,32 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createTicketItems(): void {
-    const placements: Array<[number, number, TicketItemType]> = [
-      [184, 154, 'Hammers'],
-      [184, 456, 'Hammers'],
-      [770, 154, 'Hammers'],
-      [356, 254, 'Tape'],
-      [770, 382, 'Tape'],
-      [590, 456, 'Drill Bits'],
-    ];
-
-    for (const [x, y, type] of placements) {
+    for (const { x, y, type } of this.activeLevel.ticketItems) {
       this.ticketItems.push(new TicketItem(this, x, y, type));
+    }
+  }
+
+  private createHazards(): void {
+    for (const forkliftConfig of this.activeLevel.forklifts) {
+      const points = forkliftConfig.points.map((point) => new Phaser.Math.Vector2(point.x, point.y));
+      const start = points[0];
+      this.forklifts.push(new ForkliftHazard(this, start.x, start.y, points));
+    }
+
+    for (const pedestrianConfig of this.activeLevel.pedestrians) {
+      const area = new Phaser.Geom.Rectangle(
+        pedestrianConfig.area.x,
+        pedestrianConfig.area.y,
+        pedestrianConfig.area.width,
+        pedestrianConfig.area.height,
+      );
+      this.pedestrians.push(new PedestrianHazard(this, pedestrianConfig.x, pedestrianConfig.y, area));
     }
   }
 
   private collectPickup(pickup: Pickup): void {
     this.showPickupPop(pickup.x, pickup.y);
+    playSoundEffect('pickup');
     pickup.destroy();
     this.score.addRegularBox();
     this.message = '+10 regular box';
@@ -228,29 +262,53 @@ export class GameScene extends Phaser.Scene {
     }
 
     nearby.markPicked();
+    playSoundEffect('pickup');
+    if (nearby.itemType === 'Freezer Pack' && this.coldDeadline === 0) {
+      this.coldDeadline = this.time.now + 20_000;
+    }
     this.combo += 1;
     this.score.addCorrectPick(this.combo);
-    this.message = `${nearby.itemType} picked. Combo x${this.combo}.`;
+    this.message = nearby.itemType === 'Freezer Pack'
+      ? 'Freezer Pack picked - get it to Chute 03.'
+      : `${nearby.itemType} picked. Combo x${this.combo}.`;
   }
 
   private tryUnload(): void {
-    if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.chute.x, this.chute.y) > 70) {
-      this.message = 'Drive to Chute 06 to unload.';
+    const nearRegularChute = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.chute.x, this.chute.y) <= 70;
+    const nearColdChute = this.coldChute
+      ? Phaser.Math.Distance.Between(this.player.x, this.player.y, this.coldChute.x, this.coldChute.y) <= 70
+      : false;
+
+    if (!nearRegularChute && !nearColdChute) {
+      this.message = `Drive to Chute ${this.activeLevel.chute} to unload.`;
       return;
     }
 
-    const result = this.ticket.unload();
+    const isColdUnload = nearColdChute && this.ticket.isCarrying('Freezer Pack');
+    const acceptedTypes: TicketItemType[] = isColdUnload
+      ? ['Freezer Pack']
+      : this.activeLevel.requiredItems.map((line) => line.type).filter((type) => type !== 'Freezer Pack');
+    const result = this.ticket.unloadTypes(acceptedTypes);
     if (result.unloaded === 0) {
-      this.message = 'No required items on truck.';
+      this.message = isColdUnload ? 'No freezer freight on truck.' : 'No regular items for this chute.';
       return;
+    }
+
+    if (isColdUnload && !this.ticket.isCarrying('Freezer Pack')) {
+      this.coldDeadline = 0;
     }
 
     this.score.addUnload();
-    this.message = `Unloaded ${result.unloaded} item${result.unloaded === 1 ? '' : 's'} at Chute 06.`;
+    playSoundEffect('dropoff');
+    const chuteId = isColdUnload ? this.activeLevel.coldChute?.id : this.activeLevel.chute;
+    this.message = `Unloaded ${result.unloaded} item${result.unloaded === 1 ? '' : 's'} at Chute ${chuteId}.`;
 
     if (result.completed) {
       this.score.addCompletionBonus(this.remainingSeconds);
+      const nextLevel = getNextLevelNumber(this.activeLevel.level);
       this.scene.start('LevelCompleteScene', {
+        level: this.activeLevel.level,
+        nextLevel,
         score: this.score.value,
         remainingSeconds: this.remainingSeconds,
         accuracy: this.ticket.accuracyPercent,
@@ -273,10 +331,16 @@ export class GameScene extends Phaser.Scene {
     this.lives -= 1;
     this.combo = 0;
     this.remainingSeconds = Math.max(0, this.remainingSeconds - 5);
+    const fragilePenalty = this.ticket.isCarrying('Fragile');
+    if (fragilePenalty) {
+      this.ticket.recordFragileBreakage();
+      this.score.addWrongPickPenalty();
+    }
+    playSoundEffect('crash');
     this.showCollisionFeedback();
     this.player.setPosition(this.respawn.x, this.respawn.y);
     this.player.stop();
-    this.message = 'Forklift collision - life lost.';
+    this.message = fragilePenalty ? 'Fragile freight damaged - accuracy hit.' : 'Forklift collision - life lost.';
 
     if (this.lives <= 0) {
       this.scene.start('GameOverScene', {
@@ -285,6 +349,25 @@ export class GameScene extends Phaser.Scene {
         accuracy: this.ticket.accuracyPercent,
         reason: 'Lives reached zero.',
       });
+    }
+  }
+
+  private checkColdChainTimer(): void {
+    if (this.coldDeadline === 0 || !this.ticket.isCarrying('Freezer Pack')) {
+      return;
+    }
+    const remaining = Math.ceil((this.coldDeadline - this.time.now) / 1000);
+    if (remaining <= 0) {
+      this.scene.start('GameOverScene', {
+        score: this.score.value,
+        picks: `${this.ticket.completedCount} / ${this.ticket.totalRequired}`,
+        accuracy: this.ticket.accuracyPercent,
+        reason: 'Freezer freight warmed up.',
+      });
+      return;
+    }
+    if (remaining <= 5) {
+      this.message = `Cold chain critical: ${remaining}s to Chute 03.`;
     }
   }
 
@@ -317,6 +400,7 @@ export class GameScene extends Phaser.Scene {
       combo: this.combo,
       message: this.message,
       ticket: this.ticket,
+      level: this.activeLevel,
     };
   }
 
@@ -388,6 +472,10 @@ export class GameScene extends Phaser.Scene {
 
     const nearChute = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.chute.x, this.chute.y) <= 78;
     this.chute.setActionGlow(nearChute);
+    if (this.coldChute) {
+      const nearColdChute = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.coldChute.x, this.coldChute.y) <= 78;
+      this.coldChute.setActionGlow(nearColdChute);
+    }
   }
 
   private showPickupPop(x: number, y: number): void {
@@ -436,18 +524,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   private playCurrentMusic(): void {
-    const key = this.musicKeys[this.currentMusicIndex];
+    const key = this.activeLevel.musicKeys[this.currentMusicIndex];
     this.currentMusic = this.sound.add(key, { volume: 0.58 });
     this.currentMusic.once('complete', () => {
       this.currentMusic?.destroy();
-      this.currentMusicIndex = (this.currentMusicIndex + 1) % this.musicKeys.length;
+      this.currentMusicIndex = (this.currentMusicIndex + 1) % this.activeLevel.musicKeys.length;
       this.playCurrentMusic();
     });
     this.currentMusic.play();
   }
 
   private stopMusicPlaylist(): void {
-    for (const key of this.musicKeys) {
+    for (const key of this.activeLevel.musicKeys) {
       this.sound.stopByKey(key);
     }
     this.currentMusic?.destroy();

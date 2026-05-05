@@ -4,7 +4,11 @@ import { BootScene } from '../scenes/BootScene';
 import { GameOverScene } from '../scenes/GameOverScene';
 import { GameScene } from '../scenes/GameScene';
 import { LevelCompleteScene } from '../scenes/LevelCompleteScene';
+import { MezzanineScene } from '../scenes/MezzanineScene';
+import { FinaleScene } from '../scenes/FinaleScene';
+import { DealerDashScene } from '../scenes/DealerDashScene';
 import { StartScene } from '../scenes/StartScene';
+import { WinnerCreditsScene } from '../scenes/WinnerCreditsScene';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -22,5 +26,15 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [BootScene, StartScene, GameScene, GameOverScene, LevelCompleteScene],
+  scene: [
+    BootScene,
+    StartScene,
+    GameScene,
+    MezzanineScene,
+    FinaleScene,
+    DealerDashScene,
+    GameOverScene,
+    LevelCompleteScene,
+    WinnerCreditsScene,
+  ],
 };
