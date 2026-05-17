@@ -1,4 +1,6 @@
 import Phaser from 'phaser';
+import { startConfig } from '../config/startConfig';
+import { registerStartAction } from '../systems/StartAction';
 import { registerSoundToggle } from '../systems/SoundToggle';
 import { drawHouseHassonLogoBadge } from '../ui/BrandBadge';
 
@@ -47,11 +49,6 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.input.keyboard?.once('keydown-SPACE', () => this.scene.start('GameScene', { level: 1 }));
-    this.input.gamepad?.once('down', (_pad: Phaser.Input.Gamepad.Gamepad, button: Phaser.Input.Gamepad.Button) => {
-      if (button.index === 0) {
-        this.scene.start('GameScene', { level: 1 });
-      }
-    });
+    registerStartAction(this, () => this.scene.start(startConfig.scene, { level: startConfig.level }));
   }
 }

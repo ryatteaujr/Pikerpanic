@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
-import { isDealerDashLevel } from '../config/dealerDashConfig';
-import { isFinaleLevel } from '../config/finaleConfig';
-import { isMezzanineLevel } from '../config/mezzanineConfig';
+import { getSceneKeyForLevel } from '../config/startConfig';
+import { registerStartAction } from '../systems/StartAction';
 import { registerSoundToggle } from '../systems/SoundToggle';
 import { drawHouseHassonLogoBadge } from '../ui/BrandBadge';
 
@@ -62,21 +61,9 @@ export class LevelCompleteScene extends Phaser.Scene {
 
     const startNextLevel = () => {
       const level = data.nextLevel ?? 1;
-      const sceneKey = isDealerDashLevel(level)
-        ? 'DealerDashScene'
-        : isFinaleLevel(level)
-          ? 'FinaleScene'
-          : isMezzanineLevel(level)
-            ? 'MezzanineScene'
-            : 'GameScene';
-      this.scene.start(sceneKey, { level });
+      this.scene.start(getSceneKeyForLevel(level), { level });
     };
 
-    this.input.keyboard?.once('keydown-SPACE', startNextLevel);
-    this.input.gamepad?.once('down', (_pad: Phaser.Input.Gamepad.Gamepad, button: Phaser.Input.Gamepad.Button) => {
-      if (button.index === 0) {
-        startNextLevel();
-      }
-    });
+    registerStartAction(this, startNextLevel);
   }
 }

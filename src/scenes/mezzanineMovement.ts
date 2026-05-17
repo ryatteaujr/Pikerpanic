@@ -25,6 +25,15 @@ export interface MezzanineMovementResult {
   allowGravity: boolean;
 }
 
+interface MezzanineInputState {
+  keyboard: MezzanineMovementInput;
+  gamepad: {
+    x: number;
+    y: number;
+    pickPressed: boolean;
+  };
+}
+
 const PLAYER_SPEED = 170;
 const CLIMB_SPEED = 145;
 const JUMP_SPEED = 360;
@@ -60,6 +69,16 @@ export function getMezzanineMovement(state: MezzanineMovementState): MezzanineMo
   }
 
   return { velocityX, allowGravity: true };
+}
+
+export function getMezzanineInput(state: MezzanineInputState): MezzanineMovementInput {
+  return {
+    left: state.keyboard.left || state.gamepad.x < -0.25,
+    right: state.keyboard.right || state.gamepad.x > 0.25,
+    up: state.keyboard.up || state.gamepad.y < -0.25,
+    down: state.keyboard.down || state.gamepad.y > 0.25,
+    jump: state.keyboard.jump || state.gamepad.pickPressed,
+  };
 }
 
 function rectanglesOverlap(a: BoundsLike, b: BoundsLike): boolean {

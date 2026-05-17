@@ -2,4 +2,11 @@ node_modules/
 dist/
 .vite/
 .git-publish/
+.git-publish-*/
+.git-mainfix-*/
+.git-onefile-*/
+.git-pr-*/
+.publish-api-*/
 *.log
+delete-temp-*.json
+update-character-lineup*.json

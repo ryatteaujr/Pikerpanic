@@ -110,8 +110,8 @@ describe('SoundEffectManager', () => {
 });
 
 describe('level configuration', () => {
-  it('advances through all ten campaign levels', () => {
-    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(getNextLevelNumber)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, null]);
+  it('advances through all thirteen campaign levels', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map(getNextLevelNumber)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, null]);
   });
 
   it('keeps level one order and chute unchanged', () => {

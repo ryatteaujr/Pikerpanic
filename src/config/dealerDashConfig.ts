@@ -41,7 +41,7 @@ export interface DealerDashLevelConfig {
 
 export const dealerDashLevels = [
   {
-    level: 10,
+    level: 13,
     name: 'Dealer-Dash',
     subtitle: 'Deliver fast. Dock clean.',
     timerSeconds: 135,

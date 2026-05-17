@@ -186,7 +186,7 @@ export function getLevelConfig(level: number): WarehouseLevelConfig {
 }
 
 export function getNextLevelNumber(level: number): number | null {
-  const levelNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const levelNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
   const currentIndex = levelNumbers.indexOf(level);
   return currentIndex === -1 ? null : levelNumbers[currentIndex + 1] ?? null;
 }

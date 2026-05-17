@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { getDealerDashLevelConfig, type DealerDashLevelConfig, type DealerStop, type DealerTraffic } from '../config/dealerDashConfig';
+import { GamepadManager } from '../systems/GamepadManager';
 import { registerSoundToggle } from '../systems/SoundToggle';
 import { playSoundEffect } from '../systems/SoundEffectManager';
+import { getDealerDashInput, isTruckInDealerDeliveryZone } from './dealerDashInput';
 
 interface TrafficRig {
   visual: Phaser.GameObjects.Container;
@@ -18,6 +20,8 @@ export class DealerDashScene extends Phaser.Scene {
   private truckBody!: Phaser.Physics.Arcade.Body;
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
+  private readonly gamepad = new GamepadManager();
+  private gamepadSnapshot = this.gamepad.snapshot();
   private traffic: TrafficRig[] = [];
   private targetIndex = 0;
   private score = 0;
@@ -38,9 +42,9 @@ export class DealerDashScene extends Phaser.Scene {
   create(data: { level?: number } = {}): void {
     registerSoundToggle(this);
     document.querySelector<HTMLDivElement>('#hud-root')!.innerHTML = '';
-    const level = getDealerDashLevelConfig(data.level ?? 10);
+    const level = getDealerDashLevelConfig(data.level ?? 13);
     if (!level) {
-      throw new Error(`Dealer-Dash level ${data.level ?? 10} is not configured.`);
+      throw new Error(`Dealer-Dash level ${data.level ?? 13} is not configured.`);
     }
 
     this.level = level;
@@ -54,7 +58,7 @@ export class DealerDashScene extends Phaser.Scene {
     this.currentMusicIndex = 0;
 
     this.cursors = this.input.keyboard?.createCursorKeys();
-    this.keys = this.input.keyboard!.addKeys('W,A,S,D,E,SPACE') as Record<string, Phaser.Input.Keyboard.Key>;
+    this.keys = this.input.keyboard!.addKeys('W,A,S,D,E,SPACE,B') as Record<string, Phaser.Input.Keyboard.Key>;
 
     this.drawWorld();
     this.drawDealerStops();
@@ -229,10 +233,18 @@ export class DealerDashScene extends Phaser.Scene {
   }
 
   private handleTruckMovement(): void {
-    const left = this.cursors?.left.isDown || this.keys.A.isDown;
-    const right = this.cursors?.right.isDown || this.keys.D.isDown;
-    const up = this.cursors?.up.isDown || this.keys.W.isDown;
-    const down = this.cursors?.down.isDown || this.keys.S.isDown;
+    this.gamepadSnapshot = this.gamepad.snapshot();
+    const input = getDealerDashInput({
+      keyboard: {
+        left: Boolean(this.cursors?.left.isDown || this.keys.A.isDown),
+        right: Boolean(this.cursors?.right.isDown || this.keys.D.isDown),
+        up: Boolean(this.cursors?.up.isDown || this.keys.W.isDown),
+        down: Boolean(this.cursors?.down.isDown || this.keys.S.isDown),
+        deliver: false,
+      },
+      gamepad: this.gamepadSnapshot,
+    });
+    const { left, right, up, down } = input;
     const velocityX = (right ? TRUCK_SPEED : 0) - (left ? TRUCK_SPEED : 0);
     const velocityY = (down ? TRUCK_SPEED : 0) - (up ? TRUCK_SPEED : 0);
     this.truckBody.setVelocity(velocityX, velocityY);
@@ -291,13 +303,27 @@ export class DealerDashScene extends Phaser.Scene {
       return;
     }
 
-    const closeEnough = Phaser.Math.Distance.Between(this.truck.x, this.truck.y, stop.x, stop.y) < 68;
+    const closeEnough = isTruckInDealerDeliveryZone(this.truck, stop);
     if (!closeEnough) {
       return;
     }
 
-    this.status = `Dock at ${stop.name}. Press E or Space.`;
-    if (Phaser.Input.Keyboard.JustDown(this.keys.E) || Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) {
+    this.status = `Dock at ${stop.name}. Press E, Space, or B.`;
+    const input = getDealerDashInput({
+      keyboard: {
+        left: false,
+        right: false,
+        up: false,
+        down: false,
+        deliver: Boolean(
+          Phaser.Input.Keyboard.JustDown(this.keys.E) ||
+          Phaser.Input.Keyboard.JustDown(this.keys.SPACE) ||
+          Phaser.Input.Keyboard.JustDown(this.keys.B)
+        ),
+      },
+      gamepad: this.gamepadSnapshot,
+    });
+    if (input.deliver) {
       this.completeDelivery(stop);
     } else {
       this.drawHud();
@@ -380,7 +406,7 @@ export class DealerDashScene extends Phaser.Scene {
     }
 
     this.hud.add(this.add.rectangle(480, 612, 650, 32, 0x071018, 0.86).setStrokeStyle(2, 0xf0c44c));
-    this.hud.add(this.add.text(480, 612, `${this.status}   Controls: Arrows/WASD drive | E/Space deliver | M sound`, {
+    this.hud.add(this.add.text(480, 612, `${this.status}   Controls: Arrows/WASD drive | E/Space/B deliver | M sound`, {
       color: '#d9e4ff',
       fontFamily: 'Arial',
       fontSize: '14px',

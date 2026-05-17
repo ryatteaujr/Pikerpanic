@@ -5,6 +5,14 @@ export interface FinaleMovementInput {
   down: boolean;
 }
 
+interface FinaleInputState {
+  keyboard: FinaleMovementInput;
+  gamepad: {
+    x: number;
+    y: number;
+  };
+}
+
 export interface FinaleMovementResult {
   velocityX: number;
   velocityY: number;
@@ -45,6 +53,15 @@ export function getFinaleMovement(input: FinaleMovementInput): FinaleMovementRes
   return {
     velocityX: (directionX / length) * PLAYER_SPEED,
     velocityY: (directionY / length) * PLAYER_SPEED,
+  };
+}
+
+export function getFinaleInput(state: FinaleInputState): FinaleMovementInput {
+  return {
+    left: state.keyboard.left || state.gamepad.x < -0.25,
+    right: state.keyboard.right || state.gamepad.x > 0.25,
+    up: state.keyboard.up || state.gamepad.y < -0.25,
+    down: state.keyboard.down || state.gamepad.y > 0.25,
   };
 }
 

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { registerStartAction } from '../systems/StartAction';
 import { registerSoundToggle } from '../systems/SoundToggle';
 
 export class WinnerCreditsScene extends Phaser.Scene {
@@ -23,11 +24,6 @@ export class WinnerCreditsScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const playAgain = () => this.scene.start('StartScene');
-    this.input.keyboard?.once('keydown-SPACE', playAgain);
-    this.input.gamepad?.once('down', (_pad: Phaser.Input.Gamepad.Gamepad, button: Phaser.Input.Gamepad.Button) => {
-      if (button.index === 0) {
-        playAgain();
-      }
-    });
+    registerStartAction(this, playAgain);
   }
 }

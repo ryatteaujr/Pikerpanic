@@ -3,9 +3,11 @@ import { getNextLevelNumber } from '../config/levelConfig';
 import { MEZZANINE_COLLISION, getSpawnClearance, resolveSpawnSafeX } from '../config/mezzanineCollision';
 import { getMezzanineLevelConfig, type MezzanineLevelConfig } from '../config/mezzanineConfig';
 import { createWorkerSprite, updateWorkerWalkAnimation } from '../objects/WorkerSprite';
+import { GamepadManager } from '../systems/GamepadManager';
 import { playSoundEffect } from '../systems/SoundEffectManager';
 import { registerSoundToggle } from '../systems/SoundToggle';
-import { getLadderInteractionBounds, getMezzanineMovement, isPlayerOverlappingLadder } from './mezzanineMovement';
+import { getMezzanineCollectibleStyle } from './mezzanineCollectibleStyle';
+import { getLadderInteractionBounds, getMezzanineInput, getMezzanineMovement, isPlayerOverlappingLadder } from './mezzanineMovement';
 
 interface MovingHazard {
   sprite: Phaser.GameObjects.Container;
@@ -26,6 +28,7 @@ export class MezzanineScene extends Phaser.Scene {
   private playerSprite!: Phaser.GameObjects.Sprite;
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
+  private readonly gamepad = new GamepadManager();
   private platforms!: Phaser.Physics.Arcade.StaticGroup;
   private ladders: Phaser.Geom.Rectangle[] = [];
   private score = 0;
@@ -158,14 +161,18 @@ export class MezzanineScene extends Phaser.Scene {
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const onLadder = this.isPlayerOnLadder();
     const isGrounded = body.blocked.down || body.touching.down;
+    const gamepad = this.gamepad.snapshot();
     const movement = getMezzanineMovement({
-      input: {
-        left: Boolean(this.cursors?.left.isDown || this.keys.A?.isDown),
-        right: Boolean(this.cursors?.right.isDown || this.keys.D?.isDown),
-        up: Boolean(this.cursors?.up.isDown || this.keys.W?.isDown),
-        down: Boolean(this.cursors?.down.isDown || this.keys.S?.isDown),
-        jump: Boolean(this.cursors?.space.isDown || this.keys.SPACE?.isDown),
-      },
+      input: getMezzanineInput({
+        keyboard: {
+          left: Boolean(this.cursors?.left.isDown || this.keys.A?.isDown),
+          right: Boolean(this.cursors?.right.isDown || this.keys.D?.isDown),
+          up: Boolean(this.cursors?.up.isDown || this.keys.W?.isDown),
+          down: Boolean(this.cursors?.down.isDown || this.keys.S?.isDown),
+          jump: Boolean(this.cursors?.space.isDown || this.keys.SPACE?.isDown),
+        },
+        gamepad,
+      }),
       onLadder,
       isGrounded,
     });
@@ -314,11 +321,14 @@ export class MezzanineScene extends Phaser.Scene {
 
   private createCollectibles(): void {
     for (const item of this.level.collectibles) {
+      const style = getMezzanineCollectibleStyle(item.label);
       const box = this.add.container(item.x, item.y).setDepth(18);
       box.add([
-        this.add.rectangle(0, 0, 36, 26, 0xd87922).setStrokeStyle(2, 0x6e3811),
+        this.add.ellipse(0, 0, 48, 36, style.glow, 0.18),
+        this.add.rectangle(0, 0, 38, 28, style.fill).setStrokeStyle(3, style.stroke),
+        this.add.rectangle(0, -8, 28, 4, style.stroke, 0.55),
         this.add.text(0, 0, item.label, {
-          color: '#fff4bf',
+          color: style.text,
           fontFamily: 'Arial',
           fontStyle: 'bold',
           fontSize: '8px',

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getLadderInteractionBounds, getMezzanineMovement, isPlayerOverlappingLadder } from '../mezzanineMovement';
+import {
+  getLadderInteractionBounds,
+  getMezzanineInput,
+  getMezzanineMovement,
+  isPlayerOverlappingLadder,
+} from '../mezzanineMovement';
 
 describe('mezzanine movement helpers', () => {
   it('detects ladder overlap from the player body bounds instead of only the center point', () => {
@@ -58,5 +63,14 @@ describe('mezzanine movement helpers', () => {
         isGrounded: true,
       }),
     ).toEqual({ velocityX: 170, velocityY: -360, allowGravity: true });
+  });
+
+  it('maps controller movement and A-button jump into mezzanine movement input', () => {
+    expect(
+      getMezzanineInput({
+        keyboard: { left: false, right: false, up: false, down: false, jump: false },
+        gamepad: { x: -1, y: 1, pickPressed: true },
+      }),
+    ).toEqual({ left: true, right: false, up: false, down: true, jump: true });
   });
 });

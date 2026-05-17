@@ -3,9 +3,11 @@ import { getFinaleLevelConfig, type FinaleLevelConfig } from '../config/finaleCo
 import { getNextLevelNumber } from '../config/levelConfig';
 import { createCartWorkerSprite, updateCartWorkerAnimation } from '../objects/CartWorkerSprite';
 import { createWorkerSprite, updateWorkerWalkAnimation } from '../objects/WorkerSprite';
+import { GamepadManager } from '../systems/GamepadManager';
 import { playSoundEffect } from '../systems/SoundEffectManager';
 import { registerSoundToggle } from '../systems/SoundToggle';
-import { clampToDockBounds, getFinaleMovement, isNearDockTarget } from './finaleMovement';
+import { getBossManPlacement } from './finaleBossMan';
+import { clampToDockBounds, getFinaleInput, getFinaleMovement, isNearDockTarget } from './finaleMovement';
 
 interface MovingThing {
   sprite: Phaser.GameObjects.Container;
@@ -44,6 +46,8 @@ export class FinaleScene extends Phaser.Scene {
   private playerSprite!: Phaser.GameObjects.Sprite;
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
+  private readonly gamepad = new GamepadManager();
+  private gamepadSnapshot = this.gamepad.snapshot();
   private hazards: MovingThing[] = [];
   private workers: WalkingWorker[] = [];
   private packages: MovingPackage[] = [];
@@ -90,6 +94,7 @@ export class FinaleScene extends Phaser.Scene {
     this.drawDock();
     this.drawConveyors();
     this.drawDockTargets();
+    this.drawBossManAvatar();
     this.createPlayer();
     this.createPackages();
     this.createHazards();
@@ -153,12 +158,16 @@ export class FinaleScene extends Phaser.Scene {
   }
 
   private handleMovement(): void {
-    const movement = getFinaleMovement({
-      left: Boolean(this.cursors?.left.isDown || this.keys.A?.isDown),
-      right: Boolean(this.cursors?.right.isDown || this.keys.D?.isDown),
-      up: Boolean(this.cursors?.up.isDown || this.keys.W?.isDown),
-      down: Boolean(this.cursors?.down.isDown || this.keys.S?.isDown),
-    });
+    this.gamepadSnapshot = this.gamepad.snapshot();
+    const movement = getFinaleMovement(getFinaleInput({
+      keyboard: {
+        left: Boolean(this.cursors?.left.isDown || this.keys.A?.isDown),
+        right: Boolean(this.cursors?.right.isDown || this.keys.D?.isDown),
+        up: Boolean(this.cursors?.up.isDown || this.keys.W?.isDown),
+        down: Boolean(this.cursors?.down.isDown || this.keys.S?.isDown),
+      },
+      gamepad: this.gamepadSnapshot,
+    }));
 
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(movement.velocityX + this.getConveyorPush(), movement.velocityY);
@@ -245,6 +254,56 @@ export class FinaleScene extends Phaser.Scene {
         fixedWidth: 82,
       }).setOrigin(0.5).setStroke('#000000', 3).setDepth(14);
     }
+  }
+
+  private drawBossManAvatar(): void {
+    const placement = getBossManPlacement(this.level.level);
+    if (!placement) {
+      return;
+    }
+
+    const boss = this.add.container(placement.x, placement.y).setDepth(placement.depth).setScale(placement.scale);
+    const addRect = (x: number, y: number, width: number, height: number, fill: number, stroke = 0x000000) =>
+      this.add.rectangle(x, y, width, height, fill).setStrokeStyle(3, stroke);
+    const skin = 0xd89462;
+    const shirt = 0xf2efe6;
+    const pants = 0x141920;
+    const black = 0x05070a;
+
+    boss.add([
+      this.add.ellipse(0, 4, 66, 14, 0x000000, 0.36),
+      addRect(-13, -29, 17, 62, pants, 0x05070a),
+      addRect(13, -29, 17, 62, pants, 0x05070a),
+      addRect(-16, 5, 26, 9, black, 0x2c3038),
+      addRect(16, 5, 26, 9, black, 0x2c3038),
+      this.add.ellipse(-34, -73, 21, 42, skin).setStrokeStyle(3, 0x5b2f1c),
+      this.add.ellipse(34, -73, 21, 42, skin).setStrokeStyle(3, 0x5b2f1c),
+      this.add.ellipse(-36, -45, 18, 30, skin).setStrokeStyle(3, 0x5b2f1c),
+      this.add.ellipse(36, -45, 18, 30, skin).setStrokeStyle(3, 0x5b2f1c),
+      addRect(-36, -26, 18, 16, black, 0x2c3038),
+      addRect(36, -26, 18, 16, black, 0x2c3038),
+      addRect(0, -73, 54, 52, shirt, 0xbfc7ca),
+      this.add.triangle(0, -88, -10, -100, 10, -100, 0, -82, 0xd7e0e3).setStrokeStyle(2, 0xbfc7ca),
+      this.add.rectangle(-12, -73, 6, 55, black),
+      this.add.rectangle(12, -73, 6, 55, black),
+      addRect(0, -43, 38, 8, 0x1d1510, 0x05070a),
+      this.add.rectangle(0, -43, 10, 12, 0xd6aa3d).setStrokeStyle(2, 0x4c3511),
+      addRect(15, -77, 18, 10, 0xd6aa3d, 0x2d2110),
+      this.add.text(15, -77, 'FM', {
+        color: '#141920',
+        fontFamily: 'Arial',
+        fontStyle: 'bold',
+        fontSize: '7px',
+        fixedWidth: 18,
+        align: 'center',
+      }).setOrigin(0.5),
+      this.add.ellipse(0, -119, 32, 39, skin).setStrokeStyle(3, 0x5b2f1c),
+      this.add.ellipse(-9, -132, 31, 18, 0x121318).setStrokeStyle(2, 0x05070a),
+      this.add.rectangle(2, -119, 12, 4, 0x05070a),
+      this.add.rectangle(-8, -119, 12, 8, 0xf4efe8, 0).setStrokeStyle(2, 0x05070a),
+      this.add.rectangle(8, -119, 12, 8, 0xf4efe8, 0).setStrokeStyle(2, 0x05070a),
+      this.add.rectangle(0, -108, 14, 3, 0x4b2416),
+    ]);
   }
 
   private drawControlsGuide(): void {
@@ -426,7 +485,12 @@ export class FinaleScene extends Phaser.Scene {
   }
 
   private checkDockLoad(): void {
-    const wantsLoad = Boolean(Phaser.Input.Keyboard.JustDown(this.keys.E) || Phaser.Input.Keyboard.JustDown(this.keys.SPACE));
+    const wantsLoad = Boolean(
+      Phaser.Input.Keyboard.JustDown(this.keys.E) ||
+      Phaser.Input.Keyboard.JustDown(this.keys.SPACE) ||
+      this.gamepadSnapshot.pickPressed ||
+      this.gamepadSnapshot.unloadPressed
+    );
     if (!wantsLoad) {
       return;
     }

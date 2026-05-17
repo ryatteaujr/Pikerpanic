@@ -6,6 +6,7 @@ import { GameScene } from '../scenes/GameScene';
 import { LevelCompleteScene } from '../scenes/LevelCompleteScene';
 import { MezzanineScene } from '../scenes/MezzanineScene';
 import { FinaleScene } from '../scenes/FinaleScene';
+import { TruckLoadScene } from '../scenes/TruckLoadScene';
 import { DealerDashScene } from '../scenes/DealerDashScene';
 import { StartScene } from '../scenes/StartScene';
 import { WinnerCreditsScene } from '../scenes/WinnerCreditsScene';
@@ -32,6 +33,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     GameScene,
     MezzanineScene,
     FinaleScene,
+    TruckLoadScene,
     DealerDashScene,
     GameOverScene,
     LevelCompleteScene,
