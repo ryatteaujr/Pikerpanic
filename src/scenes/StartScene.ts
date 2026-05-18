@@ -279,21 +279,21 @@ export class StartScene extends Phaser.Scene {
       strokeThickness: 4,
     }).setOrigin(0.5));
     this.drawStagePreview(card, stage);
-    card.add(this.add.rectangle(0, 66, 210, 54, 0x05070a, 0.9).setStrokeStyle(1, 0x331c70));
-    card.add(this.add.text(0, 50, `STAGE ${stage.stage}:`, {
+    card.add(this.add.rectangle(0, 63, 210, 60, 0x05070a, 0.9).setStrokeStyle(1, 0x331c70));
+    card.add(this.add.text(0, 45, `STAGE ${stage.stage}:`, {
       color: '#f7efd0',
       fontFamily: 'Arial',
       fontStyle: 'bold',
       fontSize: '13px',
     }).setOrigin(0.5));
-    card.add(this.add.text(0, 74, stage.title, {
+    card.add(this.add.text(0, 68, stage.title, {
       color: '#ffdf61',
       fontFamily: 'Arial Black, Arial',
       fontSize: '17px',
       stroke: '#000000',
       strokeThickness: 3,
     }).setOrigin(0.5));
-    card.add(this.add.text(0, 101, stage.rangeLabel, {
+    card.add(this.add.text(0, 90, stage.rangeLabel, {
       color: accentColor,
       fontFamily: 'Arial',
       fontStyle: 'bold',
