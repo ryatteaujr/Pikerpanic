@@ -254,8 +254,10 @@ export class DealerDashScene extends Phaser.Scene {
     }
 
     if (Math.abs(this.truckBody.velocity.x) > Math.abs(this.truckBody.velocity.y)) {
-      this.truck.rotation = this.truckBody.velocity.x >= 0 ? 0 : Math.PI;
+      this.truck.rotation = 0;
+      this.truck.setScale(this.truckBody.velocity.x >= 0 ? 1 : -1, 1);
     } else if (Math.abs(this.truckBody.velocity.y) > 1) {
+      this.truck.setScale(1, 1);
       this.truck.rotation = this.truckBody.velocity.y >= 0 ? Math.PI / 2 : -Math.PI / 2;
     }
 
