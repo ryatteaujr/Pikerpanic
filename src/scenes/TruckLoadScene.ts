@@ -21,6 +21,7 @@ import {
 const CELL_SIZE = 30;
 const BOARD_X = 330;
 const BOARD_Y = 104;
+const HUD_X = 814;
 const MOVE_REPEAT_MS = 130;
 const DROP_REPEAT_MS = 55;
 const LINE_SCORE = [0, 100, 300, 700, 1200];
@@ -200,25 +201,25 @@ export class TruckLoadScene extends Phaser.Scene {
   }
 
   private drawHelpPanel(): void {
-    this.add.rectangle(92, 228, 142, 296, 0x071019, 0.95).setStrokeStyle(2, 0xf0c44c);
+    this.add.rectangle(92, 238, 142, 316, 0x071019, 0.95).setStrokeStyle(2, 0xf0c44c);
     this.add.text(92, 112, 'HOW TO PLAY', {
       color: '#ffdf61',
       fontFamily: 'Arial Black, Arial',
       fontSize: '14px',
     }).setOrigin(0.5);
-    this.add.text(36, 142, "STACK CARGO\nTO FILL THE\nTRUCK!\n\nCOMPLETE\nLINES FOR\nBONUS POINTS.\n\nDON'T WASTE\nSPACE!", {
+    this.add.text(36, 142, "STACK CARGO\nTO FILL THE\nTRUCK!\n\nCOMPLETE LINES\nFOR BONUS.\n\nDON'T WASTE\nSPACE!", {
       color: '#f7efd0',
       fontFamily: 'Arial',
       fontStyle: 'bold',
-      fontSize: '13px',
-      lineSpacing: 5,
+      fontSize: '12px',
+      lineSpacing: 4,
     });
-    this.add.text(36, 324, 'MOVE  D-PAD\nROTATE  A\nDROP  B', {
+    this.add.text(36, 332, 'MOVE  D-PAD\nROTATE  A\nDROP  B', {
       color: '#68f39a',
       fontFamily: 'Arial',
       fontStyle: 'bold',
-      fontSize: '13px',
-      lineSpacing: 5,
+      fontSize: '12px',
+      lineSpacing: 4,
     });
   }
 
@@ -286,24 +287,24 @@ export class TruckLoadScene extends Phaser.Scene {
 
   private drawHud(): void {
     const meterPercent = Math.max(0, Math.min(100, Math.round((this.lines / this.level.targetLines) * 100)));
-    this.hudLayer!.add(this.add.rectangle(708, 320, 170, 492, 0x071019, 0.95).setStrokeStyle(2, 0x2f74d8));
-    this.hudLayer!.add(this.add.text(708, 98, `SCORE\n${String(this.score).padStart(6, '0')}`, this.hudText('#f7efd0', 22)).setOrigin(0.5));
-    this.hudLayer!.add(this.add.text(708, 174, `LEVEL\n${String(this.level.level).padStart(2, '0')}`, this.hudText('#ffdf61', 22)).setOrigin(0.5));
-    this.hudLayer!.add(this.add.text(708, 248, 'NEXT PIECE', this.hudText('#68f39a', 15)).setOrigin(0.5));
-    this.drawNextPiece(708, 308);
-    this.hudLayer!.add(this.add.text(708, 388, `TIME\n${this.formatTime(this.remainingSeconds)}`, this.hudText('#f7efd0', 22)).setOrigin(0.5));
-    this.hudLayer!.add(this.add.text(708, 458, 'CARGO METER', this.hudText('#ffdf61', 14)).setOrigin(0.5));
-    this.hudLayer!.add(this.add.rectangle(708, 492, 112, 18, 0x1b2832).setStrokeStyle(2, 0xf7efd0));
-    this.hudLayer!.add(this.add.rectangle(652 + meterPercent * 0.56, 492, meterPercent * 1.12, 16, meterPercent >= 100 ? 0x68f39a : 0xf0c44c).setOrigin(0, 0.5));
-    this.hudLayer!.add(this.add.text(708, 532, `${meterPercent}%`, this.hudText('#68f39a', 28)).setOrigin(0.5));
-    this.hudLayer!.add(this.add.text(708, 572, `LINES ${this.lines}/${this.level.targetLines}\nFILL ${getCargoFillPercent(this.grid)}%`, this.hudText('#d9e4ff', 13)).setOrigin(0.5));
+    this.hudLayer!.add(this.add.rectangle(HUD_X, 320, 142, 492, 0x071019, 0.95).setStrokeStyle(2, 0x2f74d8));
+    this.hudLayer!.add(this.add.text(HUD_X, 92, `SCORE\n${String(this.score).padStart(6, '0')}`, this.hudText('#f7efd0', 17)).setOrigin(0.5));
+    this.hudLayer!.add(this.add.text(HUD_X, 158, `LEVEL\n${String(this.level.level).padStart(2, '0')}`, this.hudText('#ffdf61', 18)).setOrigin(0.5));
+    this.hudLayer!.add(this.add.text(HUD_X, 220, 'NEXT PIECE', this.hudText('#68f39a', 12)).setOrigin(0.5));
+    this.drawNextPiece(HUD_X, 274);
+    this.hudLayer!.add(this.add.text(HUD_X, 350, `TIME\n${this.formatTime(this.remainingSeconds)}`, this.hudText('#f7efd0', 18)).setOrigin(0.5));
+    this.hudLayer!.add(this.add.text(HUD_X, 424, 'CARGO METER', this.hudText('#ffdf61', 11)).setOrigin(0.5));
+    this.hudLayer!.add(this.add.rectangle(HUD_X, 454, 104, 18, 0x1b2832).setStrokeStyle(2, 0xf7efd0));
+    this.hudLayer!.add(this.add.rectangle(HUD_X - 52 + meterPercent * 0.52, 454, meterPercent * 1.04, 16, meterPercent >= 100 ? 0x68f39a : 0xf0c44c).setOrigin(0, 0.5));
+    this.hudLayer!.add(this.add.text(HUD_X, 494, `${meterPercent}%`, this.hudText('#68f39a', 23)).setOrigin(0.5));
+    this.hudLayer!.add(this.add.text(HUD_X, 544, `LINES ${this.lines}/${this.level.targetLines}\nFILL ${getCargoFillPercent(this.grid)}%`, this.hudText('#d9e4ff', 11)).setOrigin(0.5));
   }
 
   private drawNextPiece(centerX: number, centerY: number): void {
-    const previewSize = 18;
-    this.hudLayer!.add(this.add.rectangle(centerX, centerY, 112, 72, 0x05070a).setStrokeStyle(2, 0xf7efd0));
+    const previewSize = 16;
+    this.hudLayer!.add(this.add.rectangle(centerX, centerY, 98, 72, 0x05070a).setStrokeStyle(2, 0xf7efd0));
     for (const cell of this.nextPiece.cells) {
-      this.hudLayer!.add(this.add.rectangle(centerX - 28 + cell.x * previewSize, centerY - 18 + cell.y * previewSize, previewSize - 2, previewSize - 2, this.nextPiece.color).setStrokeStyle(1, 0xf7efd0));
+      this.hudLayer!.add(this.add.rectangle(centerX - 24 + cell.x * previewSize, centerY - 18 + cell.y * previewSize, previewSize - 2, previewSize - 2, this.nextPiece.color).setStrokeStyle(1, 0xf7efd0));
     }
   }
 

@@ -11,6 +11,7 @@ import { getLadderInteractionBounds, getMezzanineInput, getMezzanineMovement, is
 
 interface MovingHazard {
   sprite: Phaser.GameObjects.Container;
+  visual?: Phaser.GameObjects.Image;
   body: Phaser.Physics.Arcade.Body;
 }
 
@@ -222,29 +223,9 @@ export class MezzanineScene extends Phaser.Scene {
     for (let y = 72; y < 610; y += 92) {
       this.add.rectangle(480, y, 900, 5, 0x14466f).setDepth(1);
     }
-    this.add.rectangle(132, 108, 156, 78, 0x1b2832, 0.92).setStrokeStyle(2, 0xffdf61).setDepth(2);
-    this.add.text(132, 108, `HOUSE-HASSON\nHARDWARE\nMEZZANINE\nLEVEL ${this.level.level}`, {
-      color: '#ffdf61',
-      fontFamily: 'Arial',
-      fontStyle: 'bold',
-      fontSize: '11px',
-      align: 'center',
-      lineSpacing: 3,
-      fixedWidth: 146,
-    }).setOrigin(0.5).setStroke('#000000', 3).setDepth(3);
 
-    this.add.rectangle(715, 108, 96, 54, 0x1b2832, 0.92).setStrokeStyle(2, 0xf7efd0).setDepth(2);
-    this.add.text(715, 108, 'SAFETY\nFIRST', {
-      color: '#f7efd0',
-      fontFamily: 'Arial',
-      fontStyle: 'bold',
-      fontSize: '13px',
-      align: 'center',
-      lineSpacing: 3,
-      fixedWidth: 88,
-    }).setOrigin(0.5).setStroke('#000000', 3).setDepth(3);
-
-    this.add.rectangle(350, 508, 130, 50, 0xffdf61).setStrokeStyle(3, 0x12151a).setDepth(2);
+    this.drawHardwareStorefronts();
+    this.add.rectangle(350, 508, 130, 50, 0xffdf61, 0.92).setStrokeStyle(3, 0x12151a).setDepth(2);
     this.add.text(350, 508, 'WATCH\nYOUR STEP', {
       color: '#12151a',
       fontFamily: 'Arial',
@@ -254,6 +235,39 @@ export class MezzanineScene extends Phaser.Scene {
       lineSpacing: 5,
       fixedWidth: 120,
     }).setOrigin(0.5).setDepth(3);
+  }
+
+  private drawHardwareStorefronts(): void {
+    const centerByLevel: Record<number, string> = {
+      4: 'hardware-main-street',
+      5: 'hardware-valley-supply',
+      6: 'hardware-miller',
+    };
+    const centerKey = centerByLevel[this.level.level] ?? 'hardware-valley-supply';
+    const sideKeys = ['hardware-main-street', 'hardware-valley-supply', 'hardware-miller'].filter((key) => key !== centerKey);
+    const stores = [
+      { key: sideKeys[0], x: 150, y: 142, width: 240, height: 178, stroke: 0xf0c44c },
+      { key: centerKey, x: 480, y: 144, width: 350, height: 260, stroke: this.level.level === 6 ? 0xc77dff : this.level.level === 5 ? 0x68f39a : 0xf0c44c },
+      { key: sideKeys[1], x: 810, y: 142, width: 240, height: 178, stroke: 0xc77dff },
+    ];
+
+    for (const store of stores) {
+      this.add.rectangle(store.x + 5, store.y + 7, store.width, store.height, 0x05070a, 0.64).setDepth(2);
+      this.add.image(store.x, store.y, store.key).setDisplaySize(store.width, store.height).setDepth(2);
+      this.add.rectangle(store.x, store.y, store.width, store.height, 0x000000, 0).setStrokeStyle(3, store.stroke, 0.9).setDepth(3);
+    }
+
+    this.add.rectangle(132, 286, 176, 54, 0x1b2832, 0.92).setStrokeStyle(2, 0xffdf61).setDepth(3);
+    this.add.text(132, 286, `LEVEL ${this.level.level}\n${this.level.name.toUpperCase()}`, {
+      color: '#ffdf61',
+      fontFamily: 'Arial',
+      fontStyle: 'bold',
+      fontSize: '11px',
+      align: 'center',
+      lineSpacing: 4,
+      fixedWidth: 164,
+      wordWrap: { width: 164, useAdvancedWrap: true },
+    }).setOrigin(0.5).setStroke('#000000', 3).setDepth(4);
   }
 
   private drawPlatforms(): void {
@@ -350,7 +364,7 @@ export class MezzanineScene extends Phaser.Scene {
 
   private createHazards(): void {
     const spawnClearance = getSpawnClearance(this.level.spawn);
-    for (const hazard of this.level.hazards) {
+    for (const [index, hazard] of this.level.hazards.entries()) {
       const x = resolveSpawnSafeX({
         x: hazard.x,
         y: hazard.y,
@@ -361,15 +375,7 @@ export class MezzanineScene extends Phaser.Scene {
         gap: MEZZANINE_COLLISION.hazard.spawnGap,
       });
       const sprite = this.add.container(x, hazard.y).setDepth(24);
-      sprite.add([
-        this.add.rectangle(0, 0, 42, 30, 0x9b5b28).setStrokeStyle(2, 0xffb15a),
-        this.add.text(0, 0, hazard.label, {
-          color: '#fff4bf',
-          fontFamily: 'Arial',
-          fontStyle: 'bold',
-          fontSize: '9px',
-        }).setOrigin(0.5),
-      ]);
+      const vehicle = this.drawVehicleHazard(sprite, hazard.label, index, hazard.vx);
       this.physics.add.existing(sprite);
       const body = sprite.body as Phaser.Physics.Arcade.Body;
       body.setSize(MEZZANINE_COLLISION.hazard.body.width, MEZZANINE_COLLISION.hazard.body.height);
@@ -380,8 +386,28 @@ export class MezzanineScene extends Phaser.Scene {
       body.setGravityY(780);
       this.physics.add.collider(sprite, this.platforms);
       this.physics.add.overlap(this.player, sprite, () => this.hitMovingFreight());
-      this.hazards.push({ sprite, body });
+      this.hazards.push({ sprite, visual: vehicle, body });
     }
+  }
+
+  private drawVehicleHazard(sprite: Phaser.GameObjects.Container, label: string, index: number, velocityX: number): Phaser.GameObjects.Image {
+    const keys = ['vehicle-hh-box-truck', 'vehicle-purple-pickup', 'vehicle-blue-van', 'vehicle-yellow-truck', 'vehicle-red-truck'];
+    const keyByLabel: Record<string, string> = {
+      HEAVY: 'vehicle-hh-box-truck',
+      BOX: 'vehicle-yellow-truck',
+      PIPE: 'vehicle-blue-van',
+      WTR: 'vehicle-red-truck',
+      BOSS: 'vehicle-purple-pickup',
+    };
+    const key = keyByLabel[label] ?? keys[index % keys.length];
+    const isLargeTruck = key === 'vehicle-hh-box-truck' || key === 'vehicle-yellow-truck' || key === 'vehicle-red-truck';
+    const width = isLargeTruck ? 78 : 66;
+    const height = isLargeTruck ? 40 : 34;
+    const shadow = this.add.ellipse(0, 14, width + 6, 12, 0x000000, 0.35);
+    const vehicle = this.add.image(0, -2, key).setDisplaySize(width, height).setOrigin(0.5);
+    vehicle.setFlipX(velocityX < 0);
+    sprite.add([shadow, vehicle]);
+    return vehicle;
   }
 
   private createWorkers(): void {
@@ -512,6 +538,7 @@ export class MezzanineScene extends Phaser.Scene {
       if (hazard.sprite.x < 70 || hazard.sprite.x > 890) {
         hazard.body.setVelocityX(-hazard.body.velocity.x);
       }
+      hazard.visual?.setFlipX(hazard.body.velocity.x < 0);
     }
   }
 

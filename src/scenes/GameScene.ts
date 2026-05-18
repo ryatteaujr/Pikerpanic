@@ -164,7 +164,15 @@ export class GameScene extends Phaser.Scene {
         .setOrigin(0.5);
     });
 
-    this.add.text(166, 558, 'SAFE START', { color: '#86d8ff', fontSize: '12px', fontFamily: 'Arial' });
+    this.add.rectangle(168, 558, 116, 26, 0x071019, 0.92).setStrokeStyle(2, 0x86d8ff).setDepth(6);
+    this.add.text(168, 558, 'SAFE START', {
+      color: '#86d8ff',
+      fontFamily: 'Arial',
+      fontStyle: 'bold',
+      fontSize: '12px',
+      fixedWidth: 104,
+      align: 'center',
+    }).setOrigin(0.5).setDepth(7);
   }
 
   private createWalls(): void {

@@ -25,26 +25,27 @@ export class StartScene extends Phaser.Scene {
     drawHouseHassonLogoBadge(this);
 
     this.add
-      .text(480, 568, 'PRESS SPACE / A TO START', {
+      .text(480, 500, 'PRESS SPACE / A TO START', {
         color: '#8dffb1',
         fontFamily: 'Arial Black, Arial',
-        fontSize: '26px',
+        fontSize: '24px',
         stroke: '#000000',
         strokeThickness: 5,
       })
       .setOrigin(0.5);
 
     this.add
-      .text(480, 610, 'Move: WASD or Arrows | Pick: Space | Unload: E or B | M: Sound', {
+      .text(480, 626, 'Move: WASD/Arrows | Pick: Space | Unload: E/B | M: Sound', {
         color: '#d9e4ff',
         fontFamily: 'Arial',
-        fontSize: '18px',
+        fontSize: '14px',
         stroke: '#000000',
-        strokeThickness: 4,
+        strokeThickness: 3,
       })
       .setOrigin(0.5);
 
     this.drawCoinPrompt();
+    this.drawTrainingPrompt();
 
     this.selectedStartLevel = startConfig.level;
     this.registerCoinMenuControls();
@@ -84,6 +85,7 @@ export class StartScene extends Phaser.Scene {
       this.lastStageMoveAt = this.time.now;
       this.drawCoinMenu();
     });
+    keyboard.on('keydown-T', () => this.scene.start('InboundTrainingScene'));
 
     keyboard.on('keydown-UP', () => this.moveCoinMenuStageSelection(-1));
     keyboard.on('keydown-LEFT', () => this.moveCoinMenuStageSelection(-1));
@@ -102,28 +104,55 @@ export class StartScene extends Phaser.Scene {
   }
 
   private drawCoinPrompt(): void {
-    const x = 794;
-    const y = 566;
-    this.add.rectangle(x, y, 236, 70, 0x071019, 0.86).setStrokeStyle(2, 0xf0c44c).setDepth(20);
-    this.add.circle(x - 88, y, 22, 0xf0c44c).setStrokeStyle(3, 0xfff0a8).setDepth(21);
-    this.add.circle(x - 88, y, 14, 0xd89d24).setDepth(22);
-    this.add.text(x - 88, y, 'C', {
+    const x = 770;
+    const y = 570;
+    this.add.rectangle(x, y, 280, 54, 0x071019, 0.86).setStrokeStyle(2, 0xf0c44c).setDepth(20);
+    this.add.circle(x - 108, y, 18, 0xf0c44c).setStrokeStyle(3, 0xfff0a8).setDepth(21);
+    this.add.circle(x - 108, y, 11, 0xd89d24).setDepth(22);
+    this.add.text(x - 108, y, 'C', {
       color: '#071019',
       fontFamily: 'Arial Black, Arial',
-      fontSize: '18px',
+      fontSize: '15px',
     }).setOrigin(0.5).setDepth(23);
-    this.add.text(x + 18, y - 12, 'SELECT STAGE', {
+    this.add.text(x + 26, y - 9, 'SELECT STAGE', {
       color: '#ffdf61',
       fontFamily: 'Arial Black, Arial',
-      fontSize: '16px',
+      fontSize: '15px',
       stroke: '#000000',
       strokeThickness: 3,
     }).setOrigin(0.5).setDepth(23);
-    this.add.text(x + 18, y + 14, 'PRESS C', {
+    this.add.text(x + 26, y + 12, 'PRESS C', {
       color: '#8dffb1',
       fontFamily: 'Arial',
       fontStyle: 'bold',
-      fontSize: '13px',
+      fontSize: '12px',
+    }).setOrigin(0.5).setDepth(23);
+  }
+
+  private drawTrainingPrompt(): void {
+    const x = 190;
+    const y = 570;
+    const button = this.add.rectangle(x, y, 300, 54, 0x071019, 0.88)
+      .setStrokeStyle(2, 0x68f39a)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20);
+    button.on('pointerdown', () => this.scene.start('InboundTrainingScene'));
+    this.add.rectangle(x - 120, y, 34, 28, 0xd99032).setStrokeStyle(3, 0xffdf61).setDepth(21);
+    this.add.rectangle(x - 120, y - 7, 24, 3, 0xfff0a8, 0.75).setDepth(22);
+    this.add.text(x + 22, y - 9, 'TRAINING: INBOUND DELIVERY', {
+      color: '#8dffb1',
+      fontFamily: 'Arial Black, Arial',
+      fontSize: '12px',
+      stroke: '#000000',
+      strokeThickness: 3,
+      fixedWidth: 220,
+      align: 'center',
+    }).setOrigin(0.5).setDepth(23);
+    this.add.text(x + 22, y + 12, 'PRESS T OR CLICK', {
+      color: '#d9e4ff',
+      fontFamily: 'Arial',
+      fontStyle: 'bold',
+      fontSize: '11px',
     }).setOrigin(0.5).setDepth(23);
   }
 

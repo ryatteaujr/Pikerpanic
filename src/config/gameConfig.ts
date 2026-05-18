@@ -3,6 +3,7 @@ import { levelConfig } from './levelConfig';
 import { BootScene } from '../scenes/BootScene';
 import { GameOverScene } from '../scenes/GameOverScene';
 import { GameScene } from '../scenes/GameScene';
+import { InboundTrainingScene } from '../scenes/InboundScene';
 import { LevelCompleteScene } from '../scenes/LevelCompleteScene';
 import { MezzanineScene } from '../scenes/MezzanineScene';
 import { FinaleScene } from '../scenes/FinaleScene';
@@ -30,6 +31,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   scene: [
     BootScene,
     StartScene,
+    InboundTrainingScene,
     GameScene,
     MezzanineScene,
     FinaleScene,

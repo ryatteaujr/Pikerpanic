@@ -7,6 +7,7 @@ import { getDealerDashInput, isTruckInDealerDeliveryZone } from './dealerDashInp
 
 interface TrafficRig {
   visual: Phaser.GameObjects.Container;
+  image: Phaser.GameObjects.Image;
   config: DealerTraffic;
 }
 
@@ -147,23 +148,23 @@ export class DealerDashScene extends Phaser.Scene {
     this.dealerStopLayer = this.add.container(0, 0).setDepth(10);
     this.level.dealerStops.forEach((stop, index) => {
       const active = index === this.targetIndex;
+      const storefrontKey = this.getStorefrontKey(stop.name);
       this.dealerStopLayer?.add(
-        this.add.rectangle(stop.x, stop.y, 158, 82, active ? 0x233d27 : 0x17242a).setStrokeStyle(4, stop.color),
+        this.add.rectangle(stop.x, stop.y, 178, 104, active ? 0x233d27 : 0x071019, 0.94).setStrokeStyle(4, stop.color),
       );
-      this.dealerStopLayer?.add(this.add.text(stop.x, stop.y - 18, stop.name.toUpperCase(), {
-        align: 'center',
-        color: '#f6f0cf',
-        fontFamily: 'Arial Black, Arial',
-        fontSize: '12px',
-        wordWrap: { width: 140 },
-      }).setOrigin(0.5));
-      this.dealerStopLayer?.add(this.add.text(stop.x, stop.y + 20, stop.cargo.toUpperCase(), {
-        align: 'center',
-        color: '#d9e4ff',
-        fontFamily: 'Arial',
-        fontSize: '12px',
-      }).setOrigin(0.5));
+      this.dealerStopLayer?.add(this.add.image(stop.x, stop.y, storefrontKey).setDisplaySize(168, 94));
+      this.dealerStopLayer?.add(this.add.rectangle(stop.x, stop.y, 168, 94, 0x000000, 0).setStrokeStyle(2, stop.color, active ? 1 : 0.55));
     });
+  }
+
+  private getStorefrontKey(name: string): string {
+    if (name.toLowerCase().includes('miller')) {
+      return 'hardware-miller';
+    }
+    if (name.toLowerCase().includes('valley')) {
+      return 'hardware-valley-supply';
+    }
+    return 'hardware-main-street';
   }
 
   private drawHazards(): void {
@@ -190,46 +191,46 @@ export class DealerDashScene extends Phaser.Scene {
 
   private createSemiTruckVisual(): Phaser.GameObjects.Container {
     const rig = this.add.container(0, 0);
-    const shadow = this.add.ellipse(-12, 8, 136, 40, 0x000000, 0.38);
-    const trailer = this.add.rectangle(-28, 0, 82, 34, 0xe7edf0).setStrokeStyle(3, 0x364550);
-    const trailerDoor = this.add.rectangle(-68, 0, 8, 30, 0xb9c5c9).setStrokeStyle(1, 0x364550);
-    const stripe = this.add.rectangle(-28, 0, 78, 8, 0xf0c44c);
-    const cab = this.add.rectangle(28, 0, 42, 38, 0xd94d24).setStrokeStyle(3, 0x3f210e);
-    const hood = this.add.rectangle(56, 0, 24, 30, 0xf39a22).setStrokeStyle(2, 0x3f210e);
-    const windshield = this.add.rectangle(34, -8, 18, 12, 0x7fe7ff).setStrokeStyle(1, 0xffffff);
-    const grille = this.add.rectangle(70, 0, 5, 22, 0xcfd9df);
-    const leftHeadlight = this.add.rectangle(74, -10, 4, 5, 0xfff2a0);
-    const rightHeadlight = this.add.rectangle(74, 10, 4, 5, 0xfff2a0);
-    const logo = this.add.text(-28, 0, 'HH', {
-      color: '#10251b',
-      fontFamily: 'Arial Black, Arial',
-      fontSize: '12px',
-    }).setOrigin(0.5);
-
-    for (const wheelX of [-64, -38, 20, 48]) {
-      rig.add(this.add.rectangle(wheelX, -23, 14, 7, 0x111820).setStrokeStyle(1, 0x7a8790));
-      rig.add(this.add.rectangle(wheelX, 23, 14, 7, 0x111820).setStrokeStyle(1, 0x7a8790));
-    }
-
-    rig.add([shadow, trailer, trailerDoor, stripe, cab, hood, windshield, grille, leftHeadlight, rightHeadlight, logo]);
+    rig.add(this.add.ellipse(-4, 16, 136, 34, 0x000000, 0.36));
+    rig.add(this.add.image(0, 0, 'vehicle-hh-box-truck').setDisplaySize(142, 72));
     return rig;
   }
 
   private createTraffic(): void {
-    for (const traffic of this.level.traffic) {
+    for (const [index, traffic] of this.level.traffic.entries()) {
       const visual = this.add.container(traffic.x, traffic.y).setDepth(22);
-      visual.add(this.add.ellipse(0, 8, 62, 20, 0x000000, 0.32));
-      visual.add(this.add.rectangle(0, 0, 48, 24, traffic.color).setStrokeStyle(2, 0x111820));
-      visual.add(this.add.rectangle(12, -4, 14, 8, 0x7fe7ff));
-      visual.add(this.add.rectangle(-18, 0, 6, 18, 0x27323a));
-      visual.add(this.add.text(0, 0, traffic.label, {
-        color: '#ffffff',
-        fontFamily: 'Arial Black, Arial',
-        fontSize: '8px',
-      }).setOrigin(0.5));
-      visual.rotation = traffic.speed > 0 ? 0 : Math.PI;
-      this.traffic.push({ visual, config: traffic });
+      const key = this.getTrafficVehicleKey(traffic.label, index);
+      const size = this.getTrafficVehicleSize(key);
+      visual.add(this.add.ellipse(0, 14, size.width + 8, 16, 0x000000, 0.32));
+      const image = this.add.image(0, 0, key).setDisplaySize(size.width, size.height);
+      image.setFlipX(traffic.speed < 0);
+      visual.add(image);
+      this.traffic.push({ visual, image, config: traffic });
     }
+  }
+
+  private getTrafficVehicleKey(label: string, index: number): string {
+    const byLabel: Record<string, string> = {
+      CAR: 'vehicle-red-truck',
+      VAN: 'vehicle-blue-van',
+      BUS: 'vehicle-yellow-truck',
+      PICKUP: 'vehicle-purple-pickup',
+    };
+    const fallback = ['vehicle-red-truck', 'vehicle-blue-van', 'vehicle-yellow-truck', 'vehicle-purple-pickup', 'vehicle-hh-box-truck'];
+    return byLabel[label] ?? fallback[index % fallback.length];
+  }
+
+  private getTrafficVehicleSize(key: string): { width: number; height: number } {
+    if (key === 'vehicle-purple-pickup') {
+      return { width: 72, height: 34 };
+    }
+    if (key === 'vehicle-blue-van') {
+      return { width: 74, height: 40 };
+    }
+    if (key === 'vehicle-yellow-truck' || key === 'vehicle-red-truck') {
+      return { width: 82, height: 42 };
+    }
+    return { width: 92, height: 46 };
   }
 
   private handleTruckMovement(): void {
@@ -382,7 +383,7 @@ export class DealerDashScene extends Phaser.Scene {
     const currentStop = this.level.dealerStops[this.targetIndex];
     const panels = [
       { x: 70, width: 108, title: '1UP', value: `${this.score.toString().padStart(6, '0')}` },
-      { x: 188, width: 90, title: 'LEVEL', value: '10' },
+      { x: 188, width: 90, title: 'LEVEL', value: String(this.level.level).padStart(2, '0') },
       { x: 352, width: 218, title: 'TARGET', value: currentStop ? currentStop.name.toUpperCase() : 'ROUTE CLEAR' },
       { x: 542, width: 112, title: 'CARGO', value: `${Math.max(0, 100 - this.damage)}%` },
       { x: 680, width: 104, title: 'COMBO', value: `x${this.combo}` },
@@ -405,11 +406,14 @@ export class DealerDashScene extends Phaser.Scene {
       }).setOrigin(0.5));
     }
 
-    this.hud.add(this.add.rectangle(480, 612, 650, 32, 0x071018, 0.86).setStrokeStyle(2, 0xf0c44c));
+    this.hud.add(this.add.rectangle(480, 608, 720, 42, 0x071018, 0.86).setStrokeStyle(2, 0xf0c44c));
     this.hud.add(this.add.text(480, 612, `${this.status}   Controls: Arrows/WASD drive | E/Space/B deliver | M sound`, {
       color: '#d9e4ff',
       fontFamily: 'Arial',
-      fontSize: '14px',
+      fontSize: '13px',
+      align: 'center',
+      fixedWidth: 690,
+      wordWrap: { width: 690, useAdvancedWrap: true },
     }).setOrigin(0.5));
   }
 

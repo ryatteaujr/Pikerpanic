@@ -214,13 +214,13 @@ export class FinaleScene extends Phaser.Scene {
     this.drawSignBox(148, 72, 190, 58, `HOUSE-HASSON\nHARDWARE\nDOCK ${this.level.level}`, 0xffdf61, '11px');
     this.drawSignBox(486, 72, 260, 58, this.level.name.toUpperCase(), 0x68f39a);
     this.drawSignBox(812, 72, 150, 58, 'TRUCK\nDEPARTURE', 0xff4e57);
-    this.add.rectangle(108, 590, 116, 28, 0x071019, 0.95).setStrokeStyle(2, 0x86d8ff);
-    this.add.text(108, 590, 'SAFE START', {
+    this.add.rectangle(108, 562, 106, 26, 0x071019, 0.95).setStrokeStyle(2, 0x86d8ff);
+    this.add.text(108, 562, 'SAFE START', {
       color: '#86d8ff',
       fontFamily: 'Arial',
       fontStyle: 'bold',
-      fontSize: '13px',
-      fixedWidth: 104,
+      fontSize: '12px',
+      fixedWidth: 94,
       align: 'center',
     }).setOrigin(0.5);
   }
@@ -243,15 +243,14 @@ export class FinaleScene extends Phaser.Scene {
 
   private drawDockTargets(): void {
     for (const target of this.level.dockTargets) {
-      this.add.rectangle(target.x, target.y, 108, 64, 0x173323).setStrokeStyle(4, 0x68f39a).setDepth(12);
-      this.add.rectangle(target.x + 46, target.y, 8, 58, 0x68f39a, 0.8).setDepth(13);
-      this.add.text(target.x - 8, target.y, target.label, {
+      this.add.image(target.x, target.y, 'dock-target').setDisplaySize(108, 64).setDepth(12);
+      this.add.text(target.x, target.y - 21, target.label, {
         color: '#d7ffe5',
-        fontFamily: 'Arial',
+        fontFamily: 'Arial Black, Arial',
         fontStyle: 'bold',
-        fontSize: '13px',
+        fontSize: '11px',
         align: 'center',
-        fixedWidth: 82,
+        fixedWidth: 80,
       }).setOrigin(0.5).setStroke('#000000', 3).setDepth(14);
     }
   }
@@ -307,25 +306,25 @@ export class FinaleScene extends Phaser.Scene {
   }
 
   private drawControlsGuide(): void {
-    const x = 146;
-    const y = 154;
-    this.add.rectangle(x, y, 168, 92, 0x071019, 0.92).setStrokeStyle(2, 0x68f39a, 0.85).setDepth(80);
-    this.add.text(x, y - 32, 'KEYBOARD', {
+    const x = 142;
+    const y = 510;
+    this.add.rectangle(x, y, 162, 74, 0x071019, 0.92).setStrokeStyle(2, 0x68f39a, 0.85).setDepth(80);
+    this.add.text(x, y - 25, 'KEYBOARD', {
       color: '#68f39a',
       fontFamily: 'Arial',
       fontStyle: 'bold',
-      fontSize: '13px',
+      fontSize: '12px',
       align: 'center',
-      fixedWidth: 148,
+      fixedWidth: 142,
     }).setOrigin(0.5).setDepth(81);
-    this.add.text(x, y + 10, 'MOVE  ARROWS / WASD\nLOAD  E / SPACE\nAVOID TRAFFIC', {
+    this.add.text(x, y + 9, 'MOVE  ARROWS/WASD\nLOAD  E/SPACE\nAVOID TRAFFIC', {
       color: '#f7efd0',
       fontFamily: 'Arial',
       fontStyle: 'bold',
-      fontSize: '12px',
+      fontSize: '11px',
       align: 'left',
-      fixedWidth: 140,
-      lineSpacing: 7,
+      fixedWidth: 134,
+      lineSpacing: 5,
     }).setOrigin(0.5).setDepth(81);
   }
 
@@ -551,7 +550,7 @@ export class FinaleScene extends Phaser.Scene {
       align: 'center',
       fixedWidth: 104,
       lineSpacing: 1,
-    }));
+    }).setOrigin(0.5, 0));
     this.hudContainer.add(this.add.text(324, 6, `LOAD\n${this.loaded}/${this.level.loadGoal}`, {
       color: '#68f39a',
       fontFamily: 'Arial',
@@ -560,7 +559,7 @@ export class FinaleScene extends Phaser.Scene {
       align: 'center',
       fixedWidth: 100,
       lineSpacing: 1,
-    }));
+    }).setOrigin(0.5, 0));
     this.hudContainer.add(this.add.text(408, 6, `LEVEL\n${String(this.level.level).padStart(2, '0')}`, {
       color: '#ffdf61',
       fontFamily: 'Arial',
@@ -569,15 +568,6 @@ export class FinaleScene extends Phaser.Scene {
       align: 'center',
       fixedWidth: 76,
       lineSpacing: 1,
-    }));
-    this.hudContainer.add(this.add.text(480, 7, this.message, {
-      color: '#f7efd0',
-      fontFamily: 'Arial',
-      fontStyle: 'bold',
-      fontSize: '12px',
-      align: 'center',
-      fixedWidth: 270,
-      wordWrap: { width: 270, useAdvancedWrap: true },
     }).setOrigin(0.5, 0));
     this.hudContainer.add(this.add.text(678, 6, `CARRY\n${this.carried}/${CARRY_LIMIT}`, {
       color: '#86d8ff',
@@ -587,7 +577,7 @@ export class FinaleScene extends Phaser.Scene {
       align: 'center',
       fixedWidth: 88,
       lineSpacing: 1,
-    }));
+    }).setOrigin(0.5, 0));
     this.hudContainer.add(this.add.text(772, 6, `LIVES\n${this.lives}`, {
       color: '#ff4e57',
       fontFamily: 'Arial',
@@ -596,7 +586,7 @@ export class FinaleScene extends Phaser.Scene {
       align: 'center',
       fixedWidth: 72,
       lineSpacing: 1,
-    }));
+    }).setOrigin(0.5, 0));
     this.hudContainer.add(this.add.text(852, 6, `TIME\n${String(this.remainingSeconds).padStart(3, '0')}`, {
       color: '#ff4e57',
       fontFamily: 'Arial',
@@ -605,7 +595,7 @@ export class FinaleScene extends Phaser.Scene {
       align: 'center',
       fixedWidth: 88,
       lineSpacing: 1,
-    }));
+    }).setOrigin(0.5, 0));
 
     const meterX = 484;
     const meterY = 47;
@@ -613,6 +603,16 @@ export class FinaleScene extends Phaser.Scene {
     const fillWidth = Math.max(0, Math.min(meterWidth, (this.loaded / this.level.loadGoal) * meterWidth));
     this.hudContainer.add(this.add.rectangle(meterX, meterY, meterWidth, 8, 0x24313a).setStrokeStyle(1, 0xf7efd0, 0.5));
     this.hudContainer.add(this.add.rectangle(meterX - meterWidth / 2 + fillWidth / 2, meterY, fillWidth, 8, 0x68f39a));
+    this.hudContainer.add(this.add.rectangle(480, 612, 700, 34, 0x071019, 0.9).setStrokeStyle(2, 0xf0c44c));
+    this.hudContainer.add(this.add.text(480, 612, this.message, {
+      color: '#f7efd0',
+      fontFamily: 'Arial',
+      fontStyle: 'bold',
+      fontSize: '14px',
+      align: 'center',
+      fixedWidth: 670,
+      wordWrap: { width: 670, useAdvancedWrap: true },
+    }).setOrigin(0.5));
   }
 
   private drawSignBox(x: number, y: number, width: number, height: number, text: string, color: number, fontSize = '13px'): void {

@@ -24,7 +24,7 @@ describe('start level selector', () => {
     expect(getLevelFromNumberKey('C')).toBeNull();
   });
 
-  it('groups the coin menu into five described stages', () => {
+  it('groups the coin menu into five campaign stages', () => {
     expect(getStartLevelStage(1)?.title).toBe('WAREHOUSE PICK');
     expect(getStartLevelStage(10)?.rangeLabel).toBe('LEVELS 10-12');
     expect(getStartLevelStage(13)?.rangeLabel).toBe('LEVEL 13');
